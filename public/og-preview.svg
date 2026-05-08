@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">PromptPulse social preview</title>
+  <desc id="desc">PromptPulse, score the post before the post scores you. Manual data only, local demo mode.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#07080b"/>
+      <stop offset="0.55" stop-color="#121821"/>
+      <stop offset="1" stop-color="#07140f"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop offset="0" stop-color="#68f6a8"/>
+      <stop offset="1" stop-color="#48d8ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g opacity="0.22" stroke="#ffffff" stroke-width="1">
+    <path d="M0 90h1200M0 180h1200M0 270h1200M0 360h1200M0 450h1200M0 540h1200"/>
+    <path d="M120 0v630M240 0v630M360 0v630M480 0v630M600 0v630M720 0v630M840 0v630M960 0v630M1080 0v630"/>
+  </g>
+  <rect x="86" y="78" width="1028" height="474" rx="28" fill="#ffffff" opacity="0.06" stroke="#ffffff" stroke-opacity="0.16"/>
+  <circle cx="142" cy="134" r="24" fill="none" stroke="url(#accent)" stroke-width="4"/>
+  <path d="M142 115v38M123 134h38" stroke="url(#accent)" stroke-width="4" stroke-linecap="round"/>
+  <text x="190" y="148" fill="#f5f7fb" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800">PromptPulse</text>
+  <text x="116" y="286" fill="#f5f7fb" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="900">Score the post before</text>
+  <text x="116" y="370" fill="#f5f7fb" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="900">the post scores you.</text>
+  <rect x="116" y="430" width="522" height="56" rx="28" fill="url(#accent)" opacity="0.95"/>
+  <text x="146" y="466" fill="#07100d" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800">Manual data only • Local demo mode</text>
+</svg>

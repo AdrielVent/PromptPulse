@@ -1,0 +1,247 @@
+import { describe, expect, test } from "vitest";
+import { getDashboardStats } from "./analytics";
+import { analyzePost } from "./analyzer";
+import { exportAnalysisToMarkdown } from "./export";
+import { githubPagesBase } from "./deployment";
+import { analyzeEmbedDraft, embedPrivacyBadge, getImprovedEmbedHook } from "./embed";
+import { getIntegrationSafetyText, integrationPlanCopy } from "./integration";
+import { calculateOpportunityScore, generateBuildBrief, generateIdeas, getBeatVerdict, sortIdeas } from "./ideas";
+import { generateRewriteSuite } from "./rewriter";
+import samplePosts from "../data/posts.json";
+import type { PromptedPost } from "../types";
+
+const posts = samplePosts as PromptedPost[];
+
+describe("PromptPulse analytics", () => {
+  test("calculates aggregate dashboard stats from local Prompted-style posts", () => {
+    const stats = getDashboardStats(posts);
+
+    expect(stats.totalPosts).toBe(8);
+    expect(stats.averageLikes).toBe(18.88);
+    expect(stats.averageComments).toBe(7.88);
+    expect(stats.topPosts[0].title).toBe("Service Marketplace Backend");
+    expect(stats.topCategories[0].name).toBe("builder tools");
+    expect(stats.postTypePerformance[0].label).toBe("Backend / platform");
+  });
+});
+
+describe("PromptPulse scoring", () => {
+  test("scores a detailed builder post higher than a vague post", () => {
+    const strong = analyzePost({
+      title: "Built a local laptop telemetry dashboard inspired by J.A.R.V.I.S.",
+      category: "builder tools",
+      tools: "React, TypeScript, local system telemetry, charts",
+      projectType: "Dashboard",
+      timeSpent: "2 weeks",
+      body:
+        "I built a real-time telemetry dashboard that turns local laptop performance into a cinematic command center. It tracks CPU, memory, storage, battery, and sessions, then explains what each signal means for students and builders shipping on older machines. The goal was to make system health useful, visual, and easy to discuss."
+    });
+
+    const weak = analyzePost({
+      title: "My app",
+      category: "misc",
+      tools: "",
+      projectType: "app",
+      body: "Made a thing. Thoughts?"
+    });
+
+    expect(strong.overall).toBeGreaterThan(weak.overall);
+    expect(strong.suggestions).toContain("End with a sharper question that invites specific feedback.");
+    expect(weak.suggestions).toContain("Explain who the project helps and what problem it solves.");
+  });
+
+  test("explains what helped, hurt, and should be fixed for screenshot-ready analysis", () => {
+    const analysis = analyzePost({
+      title: "Built PromptPulse, an AI growth studio for Prompted builders",
+      category: "builder tools",
+      tools: "React, TypeScript, local scoring model, markdown export",
+      projectType: "Analytics product",
+      timeSpent: "1 week",
+      body:
+        "I built PromptPulse to help builders understand why some Prompted posts get more likes, comments, and useful feedback. You paste a draft, add the category and tools, then it scores clarity, usefulness, wow factor, comment potential, and founder appeal. It also rewrites the post into professional, community, and technical versions so the final share feels sharper without losing the builder's voice."
+    });
+
+    expect(analysis.helped.length).toBeGreaterThanOrEqual(2);
+    expect(analysis.hurt.length).toBeGreaterThanOrEqual(1);
+    expect(analysis.fixes.length).toBeGreaterThanOrEqual(2);
+    expect([...analysis.helped, ...analysis.hurt, ...analysis.fixes].join(" ")).toMatch(/reply|question|demo|Prompted/i);
+  });
+});
+
+describe("PromptPulse rewrite studio", () => {
+  test("creates distinct post variants, hooks, titles, tags, and a final post", () => {
+    const suite = generateRewriteSuite({
+      title: "Assignment Priority Planner",
+      category: "student apps",
+      tools: "React, local storage",
+      projectType: "Productivity app",
+      body:
+        "A planner that helps students rank assignments by urgency, effort, and impact so they can decide what to do first."
+    });
+
+    expect(suite.versions).toHaveLength(3);
+    expect(suite.titles.length).toBeGreaterThanOrEqual(4);
+    expect(suite.hooks[0]).toMatch(/built/i);
+    expect(suite.tags).toContain("student-tools");
+    expect(suite.finalPost).toContain("What would you add");
+  });
+
+  test("does not duplicate leading build verbs in generated copy", () => {
+    const suite = generateRewriteSuite({
+      title: "Built PromptPulse, an AI growth studio for Prompted builders",
+      category: "builder tools",
+      tools: "React, TypeScript",
+      projectType: "Analytics product",
+      body: "A scoring studio that helps builders improve posts before publishing."
+    });
+
+    const combined = [suite.finalPost, ...suite.titles, ...suite.versions.map((version) => version.body)].join("\n");
+
+    expect(combined).not.toMatch(/Built Built/i);
+    expect(combined).toContain("an analytics product");
+  });
+
+  test("final Prompted post opens like a real builder explaining PromptPulse", () => {
+    const suite = generateRewriteSuite({
+      title: "Built PromptPulse, an AI growth studio for Prompted builders",
+      category: "builder tools",
+      tools: "React, TypeScript, local scoring model, markdown export",
+      projectType: "Analytics product",
+      body:
+        "I built PromptPulse to help builders understand why some Prompted posts get more likes, comments, and useful feedback."
+    });
+
+    expect(suite.finalPost.startsWith("I built PromptPulse because I wanted to understand why")).toBe(true);
+    expect(suite.finalPost).toContain("some Prompted builds get more likes, comments, and useful feedback than others.");
+    expect(suite.finalPost).not.toMatch(/growth studio|value proposition|move faster/i);
+  });
+});
+
+describe("PromptPulse idea generator", () => {
+  test("generates complete Prompted-ready project ideas", () => {
+    const ideas = generateIdeas();
+
+    expect(ideas.length).toBeGreaterThanOrEqual(10);
+    expect(ideas.map((idea) => idea.projectName)).toEqual(
+      expect.arrayContaining([
+        "DemoCritic AI",
+        "LaunchLens",
+        "RepoRadar",
+        "Prompted Post Doctor",
+        "BuildReplay",
+        "CampusTwin Terminal",
+        "FounderAuth Kit",
+        "StudySprint OS",
+        "Prompt Arena Simulator",
+        "Creator Signal Board"
+      ])
+    );
+    expect(ideas[0].predictedLikesRange.min).toBeGreaterThanOrEqual(15);
+    expect(ideas[0].scores.founderAppeal).toBeGreaterThanOrEqual(80);
+    expect(ideas[0].whyPromptedCare).toMatch(/Prompted/i);
+    expect(ideas[0].jackGrowth).toMatch(/Prompted grow|better posts|project previews|builders/i);
+    expect(ideas[0].suggestedTools.length).toBeGreaterThanOrEqual(3);
+    expect(ideas[0].endingQuestion).toMatch(/\?/);
+  });
+
+  test("sorts opportunities by founder appeal, comments, usefulness, visuals, and easiest build", () => {
+    const ideas = generateIdeas();
+
+    expect(sortIdeas(ideas, "founder")[0].scores.founderAppeal).toBeGreaterThanOrEqual(
+      sortIdeas(ideas, "founder")[1].scores.founderAppeal
+    );
+    expect(sortIdeas(ideas, "comments")[0].scores.commentMagnet).toBeGreaterThanOrEqual(
+      sortIdeas(ideas, "comments")[1].scores.commentMagnet
+    );
+    expect(sortIdeas(ideas, "useful")[0].scores.builderUsefulness).toBeGreaterThanOrEqual(
+      sortIdeas(ideas, "useful")[1].scores.builderUsefulness
+    );
+    expect(sortIdeas(ideas, "visual")[0].scores.visualWow).toBeGreaterThanOrEqual(
+      sortIdeas(ideas, "visual")[1].scores.visualWow
+    );
+    expect(sortIdeas(ideas, "easy")[0].difficulty).toBe("Approachable");
+  });
+
+  test("adds founder-facing opportunity labels, beat verdicts, and Codex-ready build briefs", () => {
+    const ideas = generateIdeas();
+    const labels = ideas.flatMap((idea) => idea.spotlightLabel ?? []);
+    const critic = ideas.find((idea) => idea.projectName === "DemoCritic AI");
+
+    expect(labels).toEqual(expect.arrayContaining(["Best Overall", "Most Likely to Get Comments", "Most Useful for Prompted"]));
+    expect(critic).toBeDefined();
+    expect(calculateOpportunityScore(critic!)).toBeGreaterThan(85);
+    expect(getBeatVerdict(critic!)).toMatch(/beats|matches/i);
+
+    const brief = generateBuildBrief(critic!);
+
+    expect(brief).toContain("Product goal");
+    expect(brief).toContain("Pages");
+    expect(brief).toContain("Components");
+    expect(brief).toContain("Scoring logic");
+    expect(brief).toContain("Sample data");
+    expect(brief).toContain("Design direction");
+    expect(brief).toContain("Export features");
+    expect(brief).toContain("README requirements");
+  });
+});
+
+describe("PromptPulse markdown export", () => {
+  test("exports an analysis with scores and suggestions", () => {
+    const analysis = analyzePost({
+      title: "RoboCube Rubik's Cube solver",
+      category: "technical demos",
+      tools: "Computer vision, robotics, React",
+      projectType: "Robotics demo",
+      body:
+        "I built a RoboCube solver that scans a scrambled cube, plans the solve path, and shows each move with a visual control panel for builders."
+    });
+
+    const markdown = exportAnalysisToMarkdown("RoboCube Rubik's Cube solver", analysis);
+
+    expect(markdown).toContain("# PromptPulse Analysis");
+    expect(markdown).toContain("Overall PromptPulse Score");
+    expect(markdown).toContain("- Clarity:");
+  });
+});
+
+describe("PromptPulse launch and deployment readiness", () => {
+  test("GitHub Pages build uses relative asset base for repo pages and custom domains", () => {
+    expect(githubPagesBase).toBe("./");
+  });
+
+  test("embed mode scoring uses local logic and needs no backend or Prompted API", () => {
+    const result = analyzeEmbedDraft("I built a project dashboard that helps builders rewrite their launch posts.");
+    const hook = getImprovedEmbedHook("I built a project dashboard that helps builders rewrite their launch posts.");
+
+    expect(result).toHaveProperty("clarity");
+    expect(result).toHaveProperty("usefulness");
+    expect(result).toHaveProperty("wowFactor");
+    expect(result).toHaveProperty("commentPotential");
+    expect(result).toHaveProperty("founderAppeal");
+    expect(hook).toMatch(/^I built this because/i);
+    expect(embedPrivacyBadge).toContain("Manual input only");
+  });
+
+  test("integration plan is explicit about no scraping and official API-only future integration", () => {
+    const safetyText = getIntegrationSafetyText();
+
+    expect(safetyText).toContain("no scraping");
+    expect(safetyText).toContain("official API");
+    expect(safetyText).toContain("no Prompted cookies");
+    expect(integrationPlanCopy.iframeExample).toContain("sandbox=\"allow-scripts allow-forms allow-popups\"");
+  });
+
+  test("final Prompted post includes the safety and privacy boundary", () => {
+    const suite = generateRewriteSuite({
+      title: "Built PromptPulse, an AI growth studio for Prompted builders",
+      category: "builder tools",
+      tools: "React, TypeScript, local scoring model, markdown export",
+      projectType: "Analytics product",
+      body: "I built PromptPulse to help builders understand why some Prompted posts get more interaction."
+    });
+
+    expect(suite.finalPost).toContain("No scraping");
+    expect(suite.finalPost).toMatch(/no login|does not require login/i);
+    expect(suite.finalPost).toContain("manual paste/import");
+  });
+});
