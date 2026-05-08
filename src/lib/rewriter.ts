@@ -34,7 +34,7 @@ export function generateRewriteSuite(input: AnalyzeInput): RewriteSuite {
   const { body: sanitizedBody, report: contamination } = stripContaminatedPhrases(input.body);
   const sanitizedInput = { ...input, body: sanitizedBody };
   const sanitizationNote = contamination.hasContamination
-    ? "Note: Removed off-topic language from the rewrite to keep the post focused on your project."
+    ? "Note: Removed off-topic or unprofessional language from the rewrite to keep the post focused on your project."
     : undefined;
   const isPromptPulse = `${input.title} ${sanitizedBody}`.toLowerCase().includes("promptpulse");
   const projectName = isPromptPulse ? "PromptPulse" : withoutBuildVerb(title) || title;

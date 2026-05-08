@@ -221,7 +221,7 @@ const warning = {
 const contaminationWarning = {
   title: "Draft contains off-topic or unprofessional text",
   body:
-    "PromptPulse found language that does not belong in a public project post. Remove unrelated, inappropriate, or unprofessional phrases before scoring the draft as publish-ready."
+    "PromptPulse found language that does not belong in a public project post. Remove unrelated, offensive, or unprofessional phrases before scoring the draft as publish-ready."
 };
 
 const cleanContaminationReport: ContaminationReport = {
@@ -235,9 +235,36 @@ const cleanContaminationReport: ContaminationReport = {
 const inappropriateRegex = /\b(i love you|touch you|wanna touch|want to touch)\b/gi;
 const allCapsSpamRegex = /\b(?:[A-Z]{3,}\s+){2,}[A-Z]{3,}\b/g;
 const spamArtifactsRegex = /\b(click here|menu|nav|link)\s+\1\b/gi;
+const unrelatedPersonalRegex = /\b(i like girls|i like boys|i hate everyone|nobody asked)\b/gi;
+const offensiveLanguageTerms = [
+  "dumbass",
+  "idiot",
+  "moron",
+  "loser",
+  "stupid",
+  "trash",
+  "garbage"
+];
+
+const cleanupHurt = [
+  "The draft includes off-topic or unprofessional language.",
+  "The inserted phrase distracts from the project explanation.",
+  "This would make the post feel less credible to readers."
+];
+
+const cleanupFixes = [
+  "Remove the unrelated or offensive phrase.",
+  "Keep the opening focused on what you built and why.",
+  "Re-run the analysis after cleanup."
+];
 
 function collectMatches(draft: string, regex: RegExp) {
   return Array.from(draft.matchAll(regex), (match) => match[0].trim()).filter(Boolean);
+}
+
+function collectTermMatches(draft: string, terms: string[]) {
+  const source = draft.toLowerCase();
+  return terms.filter((term) => new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(source));
 }
 
 function unique(values: string[]) {
@@ -253,6 +280,7 @@ export function detectDraftContamination(draft: string): ContaminationReport {
   const contaminationTypes: string[] = [];
   const contaminatedPhrases: string[] = [];
   let severity: ContaminationReport["severity"] = "none";
+  const words = tokenizeMeaningfulWords(draft);
 
   const inappropriateMatches = collectMatches(draft, inappropriateRegex);
   if (inappropriateMatches.length) {
@@ -273,6 +301,26 @@ export function detectDraftContamination(draft: string): ContaminationReport {
     contaminationTypes.push("spam artifact");
     contaminatedPhrases.push(...spamArtifactMatches);
     severity = highestSeverity(severity, "low");
+  }
+
+  const offensiveMatches = collectTermMatches(draft, offensiveLanguageTerms);
+  if (offensiveMatches.length) {
+    contaminationTypes.push("offensive-language");
+    contaminatedPhrases.push(...offensiveMatches);
+    severity = highestSeverity(severity, "high");
+  }
+
+  const unrelatedPersonalMatches = collectMatches(draft, unrelatedPersonalRegex);
+  if (unrelatedPersonalMatches.length) {
+    contaminationTypes.push("unrelated personal statement");
+    contaminatedPhrases.push(...unrelatedPersonalMatches);
+    severity = highestSeverity(severity, "high");
+  }
+
+  if (isMostlyUiActionText(draft.toLowerCase(), words)) {
+    contaminationTypes.push("ui/action text");
+    contaminatedPhrases.push(draft.trim());
+    severity = highestSeverity(severity, "medium");
   }
 
   const hasContamination = contaminatedPhrases.length > 0;
@@ -422,8 +470,8 @@ function insufficientAnalysis(
   ];
 
   if (contamination.hasContamination) {
-    hurt.unshift("The draft includes off-topic or unprofessional language that interrupts the project explanation and distracts readers.");
-    fixes.unshift("Remove the unrelated phrase. Keep the opening focused on what you built and why, then re-run the analysis.");
+    hurt.unshift(...cleanupHurt);
+    fixes.unshift(...cleanupFixes);
   }
 
   return {
@@ -434,6 +482,7 @@ function insufficientAnalysis(
     founderAppeal: Math.min(20, isMostlyIrrelevant ? 7 : hasTinyProjectClaim ? 14 : 10 + draftSignalBonus),
     overall,
     status: contamination.hasContamination ? "Needs cleanup before posting" : "Insufficient project draft",
+    readoutLabel: contamination.hasContamination ? "Needs cleanup before posting" : "Needs more project detail",
     warning: contamination.hasContamination ? contaminationWarning : warning,
     validation,
     contamination,
@@ -610,8 +659,8 @@ export function analyzePost(input: AnalyzeInput): ScoreBreakdown {
   let analysisWarning = undefined;
 
   if (contamination.hasContamination) {
-    hurt.unshift("The draft includes off-topic or unprofessional language that interrupts the project explanation and distracts readers.");
-    fixes.unshift("Remove the unrelated phrase. Keep the opening focused on what you built and why, then re-run the analysis.");
+    hurt.unshift(...cleanupHurt);
+    fixes.unshift(...cleanupFixes);
     suggestions.unshift("Remove unrelated or unprofessional language before posting.");
     analysisWarning = contaminationWarning;
 
@@ -640,6 +689,7 @@ export function analyzePost(input: AnalyzeInput): ScoreBreakdown {
     founderAppeal: adjustedFounderAppeal,
     overall,
     status,
+    readoutLabel: contamination.hasContamination ? "Needs cleanup before posting" : "Screenshot-ready readout",
     warning: analysisWarning,
     validation,
     contamination,

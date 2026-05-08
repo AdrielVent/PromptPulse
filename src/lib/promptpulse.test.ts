@@ -11,6 +11,7 @@ import samplePosts from "../data/posts.json";
 import type { PromptedPost } from "../types";
 
 const posts = samplePosts as PromptedPost[];
+const flaggedTerm = "dumbass";
 
 describe("PromptPulse analytics", () => {
   test("calculates aggregate dashboard stats from local Prompted-style posts", () => {
@@ -61,11 +62,11 @@ describe("PromptPulse scoring", () => {
     const analysis = analyzePost({ ...baseDraft, body: "I like girls" });
 
     expect(analysis.overall).toBeLessThanOrEqual(15);
-    expect(analysis.status).toBe("Insufficient project draft");
+    expect(analysis.status).toBe("Needs cleanup before posting");
     expect(analysis.helped.join(" ")).not.toMatch(/stack context/i);
   });
 
-  test("treats repeated UI action text as insufficient instead of a project post", () => {
+  test("treats repeated UI action text as cleanup contamination instead of a project post", () => {
     const analysis = analyzePost({
       ...baseDraft,
       body:
@@ -73,7 +74,7 @@ describe("PromptPulse scoring", () => {
     });
 
     expect(analysis.overall).toBeLessThanOrEqual(20);
-    expect(analysis.status).toBe("Insufficient project draft");
+    expect(analysis.status).toBe("Needs cleanup before posting");
   });
 
   test("scores a strong student app draft as sufficient with useful analysis sections", () => {
@@ -160,6 +161,41 @@ describe("PromptPulse scoring", () => {
     expect(report.severity).toBe("high");
     expect(report.contaminationTypes).toContain("inappropriate/romantic");
     expect(report.contaminatedPhrases.join(" ")).toMatch(/I LOVE YOU|WANNA TOUCH/i);
+  });
+
+  test("flags offensive terms inside otherwise project-like drafts with cleanup warning", () => {
+    const analysis = analyzePost({
+      ...sampleDraft,
+      body: `${sampleDraft.body} This ${flaggedTerm} phrase should not be in the post.`
+    });
+
+    expect(analysis.status).toBe("Needs cleanup before posting");
+    expect(analysis.overall).toBeLessThanOrEqual(40);
+    expect(analysis.warning?.title).toBe("Draft contains off-topic or unprofessional text");
+    expect(analysis.warning?.body).toContain("Remove unrelated, offensive, or unprofessional phrases");
+    expect(analysis.warning?.title).not.toBe("Draft is too thin to score accurately");
+    expect(analysis.hurt).toContain("The draft includes off-topic or unprofessional language.");
+    expect(analysis.readoutLabel).toBe("Needs cleanup before posting");
+  });
+
+  test("cleanup warning wins when an offensive term appears in a thin draft", () => {
+    const analysis = analyzePost({ ...baseDraft, body: `hello ${flaggedTerm}` });
+
+    expect(analysis.status).toBe("Needs cleanup before posting");
+    expect(analysis.overall).toBeLessThanOrEqual(25);
+    expect(analysis.warning?.title).toBe("Draft contains off-topic or unprofessional text");
+  });
+
+  test("clean draft avoids cleanup status and scores higher than offensive contaminated version", () => {
+    const contaminated = analyzePost({
+      ...sampleDraft,
+      body: `${sampleDraft.body} This ${flaggedTerm} phrase should not be in the post.`
+    });
+    const clean = analyzePost(sampleDraft);
+
+    expect(clean.status).not.toBe("Needs cleanup before posting");
+    expect(clean.warning?.title).not.toBe("Draft contains off-topic or unprofessional text");
+    expect(clean.overall).toBeGreaterThan(contaminated.overall);
   });
 
   test("scores a detailed builder post higher than a vague post", () => {
@@ -270,7 +306,23 @@ describe("PromptPulse rewrite studio", () => {
 
     expect(combined).not.toMatch(/I LOVE YOU/i);
     expect(combined).not.toMatch(/WANNA TOUCH YOU/i);
-    expect(suite.sanitizationNote).toBe("Note: Removed off-topic language from the rewrite to keep the post focused on your project.");
+    expect(suite.sanitizationNote).toBe("Note: Removed off-topic or unprofessional language from the rewrite to keep the post focused on your project.");
+  });
+
+  test("sanitizes offensive terms before generating rewrite output", () => {
+    const suite = generateRewriteSuite({
+      title: "StudySprint OS",
+      category: "student apps",
+      tools: "React, TypeScript, local JSON",
+      projectType: "Student productivity app",
+      body:
+        `I built a React app that helps students organize assignments by deadline and effort. This ${flaggedTerm} phrase does not belong. It has a sprint timer, progress cards, and exportable study plan.`
+    });
+
+    const combined = [suite.finalPost, ...suite.versions.map((version) => version.body)].join("\n");
+
+    expect(combined).not.toContain(flaggedTerm);
+    expect(suite.sanitizationNote).toBe("Note: Removed off-topic or unprofessional language from the rewrite to keep the post focused on your project.");
   });
 
   test("final Prompted post opens like a real builder explaining PromptPulse", () => {
@@ -388,7 +440,21 @@ describe("PromptPulse markdown export", () => {
 
     expect(markdown).toContain("Draft contains off-topic or unprofessional text");
     expect(markdown).toContain("Cleanup Checklist");
-    expect(markdown).toContain("Remove the unrelated phrase");
+    expect(markdown).toContain("Remove unrelated or offensive phrases");
+  });
+
+  test("exports offensive contamination status without repeating the flagged term", () => {
+    const analysis = analyzePost({
+      ...sampleDraft,
+      body: `${sampleDraft.body} This ${flaggedTerm} phrase should not be in the post.`
+    });
+
+    const markdown = exportAnalysisToMarkdown(sampleDraft.title, analysis);
+
+    expect(markdown).toContain("Needs cleanup before posting");
+    expect(markdown).toContain("Cleanup Checklist");
+    expect(markdown).toContain("Remove unrelated or offensive phrases");
+    expect(markdown).not.toContain(flaggedTerm);
   });
 });
 

@@ -66,6 +66,7 @@ export interface ScoreBreakdown {
   founderAppeal: number;
   overall: number;
   status: string;
+  readoutLabel: string;
   warning?: AnalysisWarning;
   validation: ProjectDraftValidation;
   contamination: ContaminationReport;

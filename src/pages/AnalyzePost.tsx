@@ -37,11 +37,7 @@ export default function AnalyzePost({ analysis, draft, onAnalyze, onDraftChange 
     onAnalyze(sampleDraft);
   };
 
-  const readoutLabel = analysis?.contamination.hasContamination
-    ? "Needs cleanup before posting"
-    : analysis?.warning
-      ? "Needs more project detail"
-      : "Screenshot-ready readout";
+  const readoutLabel = analysis?.readoutLabel ?? "Screenshot-ready readout";
 
   const markdown = analysis ? exportAnalysisToMarkdown(draft.title, analysis) : "";
 
