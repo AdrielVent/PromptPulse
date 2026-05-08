@@ -1,4 +1,4 @@
-import type { AnalyzeInput, ProjectDraftValidation, ScoreBreakdown } from "../types";
+import type { AnalyzeInput, ContaminationReport, ProjectDraftValidation, ScoreBreakdown } from "../types";
 
 const scoreCap = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 
@@ -218,6 +218,90 @@ const warning = {
     "PromptPulse needs a real project description to estimate clarity, usefulness, wow factor, comment potential, and founder appeal. Add what you built, who it helps, what it does, the visible demo moment, and what feedback you want."
 };
 
+const contaminationWarning = {
+  title: "Draft contains off-topic or unprofessional text",
+  body:
+    "PromptPulse found language that does not belong in a public project post. Remove unrelated, inappropriate, or unprofessional phrases before scoring the draft as publish-ready."
+};
+
+const cleanContaminationReport: ContaminationReport = {
+  hasContamination: false,
+  contaminationTypes: [],
+  contaminatedPhrases: [],
+  severity: "none",
+  explanation: "No off-topic or unprofessional text detected."
+};
+
+const inappropriateRegex = /\b(i love you|touch you|wanna touch|want to touch)\b/gi;
+const allCapsSpamRegex = /\b(?:[A-Z]{3,}\s+){2,}[A-Z]{3,}\b/g;
+const spamArtifactsRegex = /\b(click here|menu|nav|link)\s+\1\b/gi;
+
+function collectMatches(draft: string, regex: RegExp) {
+  return Array.from(draft.matchAll(regex), (match) => match[0].trim()).filter(Boolean);
+}
+
+function unique(values: string[]) {
+  return Array.from(new Set(values));
+}
+
+function highestSeverity(current: ContaminationReport["severity"], next: ContaminationReport["severity"]) {
+  const rank = { none: 0, low: 1, medium: 2, high: 3 };
+  return rank[next] > rank[current] ? next : current;
+}
+
+export function detectDraftContamination(draft: string): ContaminationReport {
+  const contaminationTypes: string[] = [];
+  const contaminatedPhrases: string[] = [];
+  let severity: ContaminationReport["severity"] = "none";
+
+  const inappropriateMatches = collectMatches(draft, inappropriateRegex);
+  if (inappropriateMatches.length) {
+    contaminationTypes.push("inappropriate/romantic");
+    contaminatedPhrases.push(...inappropriateMatches);
+    severity = highestSeverity(severity, "high");
+  }
+
+  const allCapsMatches = collectMatches(draft, allCapsSpamRegex);
+  if (allCapsMatches.length) {
+    contaminationTypes.push("all-caps interruption");
+    contaminatedPhrases.push(...allCapsMatches);
+    severity = highestSeverity(severity, "medium");
+  }
+
+  const spamArtifactMatches = collectMatches(draft, spamArtifactsRegex);
+  if (spamArtifactMatches.length) {
+    contaminationTypes.push("spam artifact");
+    contaminatedPhrases.push(...spamArtifactMatches);
+    severity = highestSeverity(severity, "low");
+  }
+
+  const hasContamination = contaminatedPhrases.length > 0;
+
+  return {
+    hasContamination,
+    contaminationTypes: unique(contaminationTypes),
+    contaminatedPhrases: unique(contaminatedPhrases),
+    severity,
+    explanation: hasContamination
+      ? "PromptPulse found off-topic or unprofessional text that should be removed before posting."
+      : cleanContaminationReport.explanation
+  };
+}
+
+export function stripContaminatedPhrases(draft: string): { body: string; report: ContaminationReport } {
+  const report = detectDraftContamination(draft);
+  if (!report.hasContamination) return { body: draft, report };
+
+  const cleaned = report.contaminatedPhrases
+    .sort((a, b) => b.length - a.length)
+    .reduce((current, phrase) => current.split(phrase).join(" "), draft)
+    .replace(/\s+([,.!?;:])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  return { body: cleaned, report };
+}
+
 function tokenizeMeaningfulWords(draft: string) {
   return draft
     .toLowerCase()
@@ -294,7 +378,11 @@ export function validateProjectDraft(draft: string): ProjectDraftValidation {
   };
 }
 
-function insufficientAnalysis(input: AnalyzeInput, validation: ProjectDraftValidation): ScoreBreakdown {
+function insufficientAnalysis(
+  input: AnalyzeInput,
+  validation: ProjectDraftValidation,
+  contamination: ContaminationReport
+): ScoreBreakdown {
   const body = input.body.trim().toLowerCase();
   const words = tokenizeMeaningfulWords(input.body);
   const mostlyUiActionText = isMostlyUiActionText(body, words);
@@ -303,7 +391,15 @@ function insufficientAnalysis(input: AnalyzeInput, validation: ProjectDraftValid
   const hasUnrelatedPersonalSentence = /^i\s+like\s+/.test(body);
   const isBareGreeting = words.length <= 2 && !hasProjectNoun;
   const isMostlyIrrelevant = isBareGreeting || hasUnrelatedPersonalSentence;
-  const maxOverall = isMostlyIrrelevant ? 15 : mostlyUiActionText ? 20 : hasTinyProjectClaim ? 25 : 20;
+  const maxOverall = contamination.hasContamination && contamination.severity === "high"
+    ? 15
+    : isMostlyIrrelevant
+      ? 15
+      : mostlyUiActionText
+        ? 20
+        : hasTinyProjectClaim
+          ? 25
+          : 20;
   const draftSignalBonus = Math.min(8, validation.detectedSignals.length * 2);
   const overall = Math.min(maxOverall, isMostlyIrrelevant ? 12 : hasTinyProjectClaim ? 22 : 16 + draftSignalBonus);
 
@@ -325,6 +421,11 @@ function insufficientAnalysis(input: AnalyzeInput, validation: ProjectDraftValid
     "End with a specific feedback question."
   ];
 
+  if (contamination.hasContamination) {
+    hurt.unshift("The draft includes off-topic or unprofessional language that interrupts the project explanation and distracts readers.");
+    fixes.unshift("Remove the unrelated phrase. Keep the opening focused on what you built and why, then re-run the analysis.");
+  }
+
   return {
     clarity: Math.min(30, isMostlyIrrelevant ? 10 : hasTinyProjectClaim ? 24 : 18 + draftSignalBonus),
     usefulness: Math.min(25, isMostlyIrrelevant ? 8 : hasTinyProjectClaim ? 16 : 12 + draftSignalBonus),
@@ -332,9 +433,10 @@ function insufficientAnalysis(input: AnalyzeInput, validation: ProjectDraftValid
     commentPotential: Math.min(20, input.body.includes("?") ? 18 : isMostlyIrrelevant ? 6 : 12),
     founderAppeal: Math.min(20, isMostlyIrrelevant ? 7 : hasTinyProjectClaim ? 14 : 10 + draftSignalBonus),
     overall,
-    status: "Insufficient project draft",
-    warning,
+    status: contamination.hasContamination ? "Needs cleanup before posting" : "Insufficient project draft",
+    warning: contamination.hasContamination ? contaminationWarning : warning,
     validation,
+    contamination,
     suggestions: fixes,
     strengths: [],
     helped,
@@ -350,9 +452,10 @@ export function analyzePost(input: AnalyzeInput): ScoreBreakdown {
   const bodyLower = body.toLowerCase();
   const context = `${title} ${input.category} ${input.projectType} ${input.tools}`.toLowerCase();
   const validation = validateProjectDraft(body);
+  const contamination = detectDraftContamination(body);
 
   if (!validation.isSufficient) {
-    return insufficientAnalysis(input, validation);
+    return insufficientAnalysis(input, validation, contamination);
   }
 
   const wordCount = body.split(/\s+/).filter(Boolean).length;
@@ -414,7 +517,7 @@ export function analyzePost(input: AnalyzeInput): ScoreBreakdown {
       (containsAny(bodyLower, ["students", "student", "users"]) ? 7 : 0)
   );
 
-  const overall = scoreCap(
+  let overall = scoreCap(
     clarity * 0.24 +
       usefulness * 0.22 +
       wowFactor * 0.18 +
@@ -498,15 +601,48 @@ export function analyzePost(input: AnalyzeInput): ScoreBreakdown {
     hurt.push("The main risk is polish without a reply hook: it may get likes without starting a useful thread.");
   }
 
+  let adjustedClarity = clarity;
+  let adjustedUsefulness = usefulness;
+  let adjustedWowFactor = wowFactor;
+  let adjustedCommentPotential = commentPotential;
+  let adjustedFounderAppeal = founderAppeal;
+  let status = getScoreStatus(overall, validation);
+  let analysisWarning = undefined;
+
+  if (contamination.hasContamination) {
+    hurt.unshift("The draft includes off-topic or unprofessional language that interrupts the project explanation and distracts readers.");
+    fixes.unshift("Remove the unrelated phrase. Keep the opening focused on what you built and why, then re-run the analysis.");
+    suggestions.unshift("Remove unrelated or unprofessional language before posting.");
+    analysisWarning = contaminationWarning;
+
+    if (contamination.severity === "high") {
+      adjustedClarity = Math.min(adjustedClarity, 55);
+      adjustedUsefulness = Math.min(adjustedUsefulness, 55);
+      adjustedWowFactor = Math.min(adjustedWowFactor, 45);
+      adjustedCommentPotential = Math.min(adjustedCommentPotential, 35);
+      adjustedFounderAppeal = Math.min(adjustedFounderAppeal, 35);
+      overall = Math.min(overall, 40);
+      status = "Needs cleanup before posting";
+    } else if (contamination.severity === "medium") {
+      overall = Math.min(overall, 55);
+      status = "Needs cleanup before posting";
+    } else if (contamination.severity === "low") {
+      overall = scoreCap(overall - 12);
+      status = getScoreStatus(overall, validation);
+    }
+  }
+
   return {
-    clarity,
-    usefulness,
-    wowFactor,
-    commentPotential,
-    founderAppeal,
+    clarity: adjustedClarity,
+    usefulness: adjustedUsefulness,
+    wowFactor: adjustedWowFactor,
+    commentPotential: adjustedCommentPotential,
+    founderAppeal: adjustedFounderAppeal,
     overall,
-    status: getScoreStatus(overall, validation),
+    status,
+    warning: analysisWarning,
     validation,
+    contamination,
     suggestions: suggestions.slice(0, 5),
     strengths: strengths.length ? strengths.slice(0, 4) : ["The draft has a usable starting point for a clearer Prompted post."],
     helped: helped.length ? helped.slice(0, 4) : ["The draft has a usable starting point for a clearer Prompted post."],

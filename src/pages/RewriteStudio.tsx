@@ -78,6 +78,7 @@ export default function RewriteStudio({ draft, onDraftChange, suite }: RewriteSt
               </div>
             </article>
           )}
+          {localSuite.sanitizationNote && <p className="sanitize-note"><em>{localSuite.sanitizationNote}</em></p>}
         </Panel>
 
         <Panel eyebrow="Post Assets" title="Titles, Hooks, and Tags">
@@ -121,6 +122,7 @@ export default function RewriteStudio({ draft, onDraftChange, suite }: RewriteSt
           action={<CopyButton value={localSuite.finalPost} label="Copy post" />}
         >
           <pre className="final-post">{localSuite.finalPost}</pre>
+          {localSuite.sanitizationNote && <p className="sanitize-note"><em>{localSuite.sanitizationNote}</em></p>}
           <div className="micro-note">
             <ClipboardCheck size={16} />
             Uses manual inputs only. You choose what to paste.

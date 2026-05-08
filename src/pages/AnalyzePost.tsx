@@ -37,6 +37,12 @@ export default function AnalyzePost({ analysis, draft, onAnalyze, onDraftChange 
     onAnalyze(sampleDraft);
   };
 
+  const readoutLabel = analysis?.contamination.hasContamination
+    ? "Needs cleanup before posting"
+    : analysis?.warning
+      ? "Needs more project detail"
+      : "Screenshot-ready readout";
+
   const markdown = analysis ? exportAnalysisToMarkdown(draft.title, analysis) : "";
 
   const exportMarkdown = () => {
@@ -105,14 +111,16 @@ export default function AnalyzePost({ analysis, draft, onAnalyze, onDraftChange 
 
             <div className={`analysis-hero ${analysis.warning ? "is-warning" : ""}`}>
               <div>
-                <p className="eyebrow">{analysis.warning ? "Needs more project detail" : "Screenshot-ready readout"}</p>
+                <p className="eyebrow">{readoutLabel}</p>
                 <strong>{analysis.overall}</strong>
                 <span>PromptPulse Score</span>
               </div>
               <div>
                 <h3>{analysis.status}</h3>
                 <p>
-                  {analysis.warning
+                  {analysis.contamination.hasContamination
+                    ? "Clean up the draft before using the score as a publish-ready signal."
+                    : analysis.warning
                     ? "The draft body needs enough project detail before PromptPulse can make a credible engagement estimate."
                     : "Manual scoring estimates whether the post will be clear, useful, visually interesting, worth replying to, and relevant to Prompted builders."}
                 </p>

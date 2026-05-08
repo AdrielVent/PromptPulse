@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getDashboardStats } from "./analytics";
-import { analyzePost, sampleDraft } from "./analyzer";
+import { analyzePost, detectDraftContamination, sampleDraft } from "./analyzer";
 import { exportAnalysisToMarkdown } from "./export";
 import { githubPagesBase } from "./deployment";
 import { analyzeEmbedDraft, embedPrivacyBadge, getImprovedEmbedHook } from "./embed";
@@ -114,6 +114,54 @@ describe("PromptPulse scoring", () => {
     expect(analysis.warning).toBeUndefined();
   });
 
+  test("caps contaminated but otherwise valid drafts and shows cleanup warning", () => {
+    const contaminated = analyzePost({
+      ...sampleDraft,
+      body:
+        "I built PromptPulse I LOVE YOU AND WANAN TOUCH YOU I wanted to understand why some Prompted posts get more likes, comments, and useful feedback than others. You paste a draft, add the category and tools, then it scores clarity, usefulness, wow factor, comment potential, and founder appeal. It also rewrites the post into professional, community, and technical versions so the final share feels sharper without losing the builder's voice."
+    });
+
+    expect(contaminated.overall).toBeLessThanOrEqual(40);
+    expect(contaminated.status).toBe("Needs cleanup before posting");
+    expect(contaminated.warning?.title).toBe("Draft contains off-topic or unprofessional text");
+    expect(contaminated.contamination.hasContamination).toBe(true);
+  });
+
+  test("scores clean version at least 20 points higher than contaminated version", () => {
+    const contaminated = analyzePost({
+      ...sampleDraft,
+      body: `${sampleDraft.body} I LOVE YOU AND WANNA TOUCH YOU`
+    });
+    const clean = analyzePost(sampleDraft);
+
+    expect(clean.overall - contaminated.overall).toBeGreaterThanOrEqual(20);
+    expect(clean.warning).toBeUndefined();
+    expect(clean.contamination.hasContamination).toBe(false);
+  });
+
+  test("detects inappropriate phrase alone without giving project credit", () => {
+    const analysis = analyzePost({
+      title: "Untitled",
+      category: "",
+      tools: "",
+      projectType: "",
+      body: "I LOVE YOU AND WANAN TOUCH YOU"
+    });
+
+    expect(analysis.overall).toBeLessThanOrEqual(15);
+    expect(["Insufficient project draft", "Needs cleanup before posting"]).toContain(analysis.status);
+    expect(analysis.contamination.hasContamination).toBe(true);
+  });
+
+  test("detects contamination severity and matched phrases locally", () => {
+    const report = detectDraftContamination("I built this dashboard. I LOVE YOU AND WANNA TOUCH YOU");
+
+    expect(report.hasContamination).toBe(true);
+    expect(report.severity).toBe("high");
+    expect(report.contaminationTypes).toContain("inappropriate/romantic");
+    expect(report.contaminatedPhrases.join(" ")).toMatch(/I LOVE YOU|WANNA TOUCH/i);
+  });
+
   test("scores a detailed builder post higher than a vague post", () => {
     const strong = analyzePost({
       title: "Built a local laptop telemetry dashboard inspired by J.A.R.V.I.S.",
@@ -206,6 +254,23 @@ describe("PromptPulse rewrite studio", () => {
     expect(combined).not.toMatch(/Turning analytics product pain/i);
     expect(combined).not.toMatch(/builder tools experiment/i);
     expect(combined).not.toMatch(/make the workflow easier to understand/i);
+  });
+
+  test("sanitizes contaminated input before generating rewrite output", () => {
+    const suite = generateRewriteSuite({
+      title: "StudySprint OS",
+      category: "student apps",
+      tools: "React, TypeScript, local JSON",
+      projectType: "Student productivity app",
+      body:
+        "I built a React app that helps students organize assignments by deadline and effort. I LOVE YOU AND WANNA TOUCH YOU It has a sprint timer, progress cards, and exportable study plan."
+    });
+
+    const combined = [suite.finalPost, ...suite.versions.map((version) => version.body)].join("\n");
+
+    expect(combined).not.toMatch(/I LOVE YOU/i);
+    expect(combined).not.toMatch(/WANNA TOUCH YOU/i);
+    expect(suite.sanitizationNote).toBe("Note: Removed off-topic language from the rewrite to keep the post focused on your project.");
   });
 
   test("final Prompted post opens like a real builder explaining PromptPulse", () => {
@@ -311,6 +376,19 @@ describe("PromptPulse markdown export", () => {
     expect(markdown).toContain("# PromptPulse Analysis");
     expect(markdown).toContain("Overall PromptPulse Score");
     expect(markdown).toContain("- Clarity:");
+  });
+
+  test("exports contamination warning and cleanup checklist", () => {
+    const analysis = analyzePost({
+      ...sampleDraft,
+      body: `${sampleDraft.body} I LOVE YOU AND WANNA TOUCH YOU`
+    });
+
+    const markdown = exportAnalysisToMarkdown(sampleDraft.title, analysis);
+
+    expect(markdown).toContain("Draft contains off-topic or unprofessional text");
+    expect(markdown).toContain("Cleanup Checklist");
+    expect(markdown).toContain("Remove the unrelated phrase");
   });
 });
 

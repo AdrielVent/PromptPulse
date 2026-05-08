@@ -48,6 +48,16 @@ export interface AnalysisWarning {
   body: string;
 }
 
+export type Severity = "none" | "low" | "medium" | "high";
+
+export interface ContaminationReport {
+  hasContamination: boolean;
+  contaminationTypes: string[];
+  contaminatedPhrases: string[];
+  severity: Severity;
+  explanation: string;
+}
+
 export interface ScoreBreakdown {
   clarity: number;
   usefulness: number;
@@ -58,6 +68,7 @@ export interface ScoreBreakdown {
   status: string;
   warning?: AnalysisWarning;
   validation: ProjectDraftValidation;
+  contamination: ContaminationReport;
   suggestions: string[];
   strengths: string[];
   helped: string[];
@@ -87,6 +98,7 @@ export interface RewriteSuite {
   hooks: string[];
   tags: string[];
   finalPost: string;
+  sanitizationNote?: string;
 }
 
 export interface ProjectIdea {

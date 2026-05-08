@@ -1,4 +1,5 @@
 import type { AnalyzeInput, RewriteSuite, RewriteVersion } from "../types";
+import { stripContaminatedPhrases } from "./analyzer";
 
 const clean = (value: string, fallback: string) => value.trim() || fallback;
 
@@ -30,16 +31,21 @@ const tagify = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-"
 
 export function generateRewriteSuite(input: AnalyzeInput): RewriteSuite {
   const title = clean(input.title, "Untitled builder project");
-  const isPromptPulse = `${input.title} ${input.body}`.toLowerCase().includes("promptpulse");
+  const { body: sanitizedBody, report: contamination } = stripContaminatedPhrases(input.body);
+  const sanitizedInput = { ...input, body: sanitizedBody };
+  const sanitizationNote = contamination.hasContamination
+    ? "Note: Removed off-topic language from the rewrite to keep the post focused on your project."
+    : undefined;
+  const isPromptPulse = `${input.title} ${sanitizedBody}`.toLowerCase().includes("promptpulse");
   const projectName = isPromptPulse ? "PromptPulse" : withoutBuildVerb(title) || title;
   const category = clean(input.category, "builder tools");
   const projectType = clean(input.projectType, "project").toLowerCase();
   const article = articleFor(projectType);
   const tools = toolList(input.tools);
   const stack = tools.length ? tools.join(", ") : "a focused no-backend prototype";
-  const audience = inferAudience(input);
+  const audience = inferAudience(sanitizedInput);
   const coreBody = clean(
-    input.body,
+    sanitizedBody,
     "I built a project that turns a rough workflow into a clearer, more useful product experience."
   );
   const promptedOpening =
@@ -99,7 +105,8 @@ export function generateRewriteSuite(input: AnalyzeInput): RewriteSuite {
       titles,
       hooks,
       tags,
-      finalPost
+      finalPost,
+      sanitizationNote
     };
   }
 
@@ -155,6 +162,7 @@ export function generateRewriteSuite(input: AnalyzeInput): RewriteSuite {
     titles,
     hooks,
     tags,
-    finalPost
+    finalPost,
+    sanitizationNote
   };
 }

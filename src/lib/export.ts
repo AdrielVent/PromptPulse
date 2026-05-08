@@ -6,8 +6,9 @@ export function exportAnalysisToMarkdown(title: string, analysis: ScoreBreakdown
   const helped = analysis.helped.map((item) => `- ${item}`).join("\n");
   const hurt = analysis.hurt.map((item) => `- ${item}`).join("\n");
   const fixes = analysis.fixes.map((item) => `- ${item}`).join("\n");
+  const checklistTitle = analysis.contamination.hasContamination ? "Cleanup Checklist" : "Improvement Checklist";
   const warning = analysis.warning
-    ? `\n## Warning\n\n**${analysis.warning.title}**\n\n${analysis.warning.body}\n\n## Improvement Checklist\n\n${fixes}\n`
+    ? `\n## Warning\n\n**${analysis.warning.title}**\n\n${analysis.warning.body}\n\n## ${checklistTitle}\n\n${fixes}\n`
     : "";
 
   return `# PromptPulse Analysis
