@@ -5,7 +5,7 @@ import PageTransition from "./components/PageTransition";
 import posts from "./data/posts.json";
 import { analyzePost, sampleDraft } from "./lib/analyzer";
 import { getDashboardStats } from "./lib/analytics";
-import { getHashForRoute, getRouteFromHash, navigationItems } from "./lib/navigation";
+import { getHashForRoute, getRouteFromHash, navigationItems, shouldStartInOrbitIntro } from "./lib/navigation";
 import { generateRewriteSuite } from "./lib/rewriter";
 import type { AnalyzeInput, ScoreBreakdown } from "./types";
 import type { PromptedPost } from "./types";
@@ -21,6 +21,9 @@ import type { PageId, RouteId } from "./lib/navigation";
 export default function App() {
   const [activeRoute, setActiveRoute] = useState<RouteId>(() =>
     typeof window === "undefined" ? "dashboard" : getRouteFromHash(window.location.hash)
+  );
+  const [hasEnteredApp, setHasEnteredApp] = useState(() =>
+    typeof window === "undefined" ? true : !shouldStartInOrbitIntro(window.location.hash)
   );
   const [draft, setDraft] = useState<AnalyzeInput>(sampleDraft);
   const [analysis, setAnalysis] = useState<ScoreBreakdown | null>(null);
@@ -41,6 +44,11 @@ export default function App() {
   const navigate = (route: RouteId) => {
     setActiveRoute(route);
     window.location.hash = getHashForRoute(route);
+  };
+
+  const selectPageFromOrbit = (pageId: PageId) => {
+    setHasEnteredApp(true);
+    navigate(pageId);
   };
 
   const runAnalysis = (input: AnalyzeInput) => {
@@ -74,33 +82,35 @@ export default function App() {
   }[activePage];
 
   return (
-    <div className="app-shell">
-      <OrbitNav activePage={activePage} onSelect={(pageId) => navigate(pageId)} />
+    <div className={`app-shell ${hasEnteredApp ? "" : "is-orbit-intro"}`}>
+      <OrbitNav activePage={activePage} introMode={!hasEnteredApp} onSelect={selectPageFromOrbit} />
 
-      <main className="main-panel">
-        <header className="topbar app-topbar">
-          <button className="brand topbar-brand" type="button" onClick={() => navigate("dashboard")}>
-            <span className="brand-mark">
-              <Sparkles size={18} />
-            </span>
-            <span>
-              <strong>PromptPulse</strong>
-              <small>Local growth studio</small>
-            </span>
-          </button>
-          <div className="topbar-heading">
-            <p className="eyebrow">Prompted builder analytics</p>
-            <h1>{activeNavigationItem.label}</h1>
-          </div>
-          <div className="pulse-status">
-            <span />
-            Local demo mode
-          </div>
-        </header>
-        <PageTransition key={activePage} pageKey={activePage}>
-          {page}
-        </PageTransition>
-      </main>
+      {hasEnteredApp && (
+        <main className="main-panel">
+          <header className="topbar app-topbar">
+            <button className="brand topbar-brand" type="button" onClick={() => navigate("dashboard")}>
+              <span className="brand-mark">
+                <Sparkles size={18} />
+              </span>
+              <span>
+                <strong>PromptPulse</strong>
+                <small>Local growth studio</small>
+              </span>
+            </button>
+            <div className="topbar-heading">
+              <p className="eyebrow">Prompted builder analytics</p>
+              <h1>{activeNavigationItem.label}</h1>
+            </div>
+            <div className="pulse-status">
+              <span />
+              Local demo mode
+            </div>
+          </header>
+          <PageTransition key={activePage} pageKey={activePage}>
+            {page}
+          </PageTransition>
+        </main>
+      )}
     </div>
   );
 }

@@ -82,6 +82,30 @@ button {
     radial-gradient(circle at 24% 18%, rgba(104, 246, 168, 0.08), transparent 22%);
 }
 
+.app-shell.is-orbit-intro {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+}
+
+.app-shell.is-orbit-intro::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 50%, rgba(72, 216, 255, 0.14), transparent 24%),
+    radial-gradient(circle at 50% 50%, rgba(104, 246, 168, 0.08), transparent 34%),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    72px 72px,
+    72px 72px;
+}
+
 .orbit-nav {
   --orbit-size: 268px;
   position: fixed;
@@ -104,6 +128,31 @@ button {
   top: auto;
   bottom: -130px;
   transform: translateX(-50%) scale(0.9);
+}
+
+.orbit-nav.is-intro {
+  --orbit-size: min(74vw, 360px);
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+}
+
+.orbit-nav.is-intro .orbit-wheel {
+  box-shadow:
+    inset 0 0 58px rgba(72, 216, 255, 0.1),
+    0 34px 120px rgba(0, 0, 0, 0.5),
+    0 0 86px rgba(72, 216, 255, 0.12);
+}
+
+.orbit-nav.is-intro .orbit-node {
+  width: 70px;
+  min-height: 60px;
+  transform: rotate(var(--orbit-angle)) translateX(calc(var(--orbit-size) * 0.41)) rotate(calc(var(--orbit-angle) * -1))
+    translate(-50%, -50%);
+}
+
+.orbit-nav.is-intro .orbit-marker::after {
+  transform: translate(calc(var(--orbit-size) * 0.39), -50%);
 }
 
 .orbit-status {
@@ -2200,6 +2249,14 @@ pre {
     left: 10px;
     width: calc(100% - 20px);
     transform: none;
+  }
+
+  .orbit-nav.is-intro {
+    top: 50%;
+    bottom: auto;
+    left: 50%;
+    width: min(92vw, 420px);
+    transform: translate(-50%, -50%);
   }
 
   .orbit-status,

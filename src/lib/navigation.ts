@@ -35,3 +35,8 @@ export function getHashForRoute(route: RouteId): string {
   if (route === "embed") return "#/embed";
   return navigationItems.find((item) => item.id === route)?.hash ?? "#/";
 }
+
+export function shouldStartInOrbitIntro(hash: string): boolean {
+  const route = hash.replace(/^#\/?/, "");
+  return route === "" || route === "/";
+}

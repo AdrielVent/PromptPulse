@@ -6,7 +6,7 @@ import { githubPagesBase } from "./deployment";
 import { analyzeEmbedDraft, embedPrivacyBadge, getImprovedEmbedHook } from "./embed";
 import { getIntegrationSafetyText, integrationPlanCopy } from "./integration";
 import { calculateOpportunityScore, generateBuildBrief, generateIdeas, getBeatVerdict, sortIdeas } from "./ideas";
-import { getPageFromHash, navigationItems } from "./navigation";
+import { getPageFromHash, navigationItems, shouldStartInOrbitIntro } from "./navigation";
 import { generateRewriteSuite } from "./rewriter";
 import samplePosts from "../data/posts.json";
 import type { PromptedPost } from "../types";
@@ -479,6 +479,13 @@ describe("PromptPulse launch and deployment readiness", () => {
     expect(getPageFromHash("#/ideas")).toBe("ideas");
     expect(getPageFromHash("#/integration")).toBe("integration");
     expect(getPageFromHash("#/missing")).toBe("dashboard");
+  });
+
+  test("root visitors start in the orbit-only selector before choosing a section", () => {
+    expect(shouldStartInOrbitIntro("")).toBe(true);
+    expect(shouldStartInOrbitIntro("#/")).toBe(true);
+    expect(shouldStartInOrbitIntro("#/analyze")).toBe(false);
+    expect(shouldStartInOrbitIntro("#/embed")).toBe(false);
   });
 
   test("platform copy avoids founder-specific UI labels", () => {
