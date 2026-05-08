@@ -32,6 +32,11 @@ export default function AnalyzePost({ analysis, draft, onAnalyze, onDraftChange 
     }, 620);
   };
 
+  const loadStrongSample = () => {
+    onDraftChange(sampleDraft);
+    onAnalyze(sampleDraft);
+  };
+
   const markdown = analysis ? exportAnalysisToMarkdown(draft.title, analysis) : "";
 
   const exportMarkdown = () => {
@@ -83,17 +88,33 @@ export default function AnalyzePost({ analysis, draft, onAnalyze, onDraftChange 
       >
         {analysis ? (
           <>
-            <div className="analysis-hero">
+            {analysis.warning && (
+              <div className="analysis-warning-card">
+                <div>
+                  <AlertTriangle size={18} />
+                  <div>
+                    <h3>{analysis.warning.title}</h3>
+                    <p>{analysis.warning.body}</p>
+                  </div>
+                </div>
+                <Button onClick={loadStrongSample} variant="secondary">
+                  Load strong sample
+                </Button>
+              </div>
+            )}
+
+            <div className={`analysis-hero ${analysis.warning ? "is-warning" : ""}`}>
               <div>
-                <p className="eyebrow">Screenshot-ready readout</p>
+                <p className="eyebrow">{analysis.warning ? "Needs more project detail" : "Screenshot-ready readout"}</p>
                 <strong>{analysis.overall}</strong>
                 <span>PromptPulse Score</span>
               </div>
               <div>
-                <h3>{analysis.overall >= 78 ? "Strong post potential" : "Needs sharper framing"}</h3>
+                <h3>{analysis.status}</h3>
                 <p>
-                  Manual scoring estimates whether the post will be clear, useful, visually interesting, worth replying
-                  to, and relevant to Prompted builders.
+                  {analysis.warning
+                    ? "The draft body needs enough project detail before PromptPulse can make a credible engagement estimate."
+                    : "Manual scoring estimates whether the post will be clear, useful, visually interesting, worth replying to, and relevant to Prompted builders."}
                 </p>
               </div>
             </div>

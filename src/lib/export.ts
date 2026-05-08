@@ -3,12 +3,20 @@ import type { ScoreBreakdown } from "../types";
 export function exportAnalysisToMarkdown(title: string, analysis: ScoreBreakdown): string {
   const suggestions = analysis.suggestions.map((suggestion) => `- ${suggestion}`).join("\n");
   const strengths = analysis.strengths.map((strength) => `- ${strength}`).join("\n");
+  const helped = analysis.helped.map((item) => `- ${item}`).join("\n");
+  const hurt = analysis.hurt.map((item) => `- ${item}`).join("\n");
+  const fixes = analysis.fixes.map((item) => `- ${item}`).join("\n");
+  const warning = analysis.warning
+    ? `\n## Warning\n\n**${analysis.warning.title}**\n\n${analysis.warning.body}\n\n## Improvement Checklist\n\n${fixes}\n`
+    : "";
 
   return `# PromptPulse Analysis
 
 ## ${title || "Untitled Post"}
 
 **Overall PromptPulse Score:** ${analysis.overall}/100
+**Status:** ${analysis.status}
+${warning}
 
 ## Score Breakdown
 
@@ -21,6 +29,18 @@ export function exportAnalysisToMarkdown(title: string, analysis: ScoreBreakdown
 ## Strengths
 
 ${strengths}
+
+## Helped
+
+${helped}
+
+## Hurt
+
+${hurt}
+
+## Fix Next
+
+${fixes}
 
 ## Suggestions
 

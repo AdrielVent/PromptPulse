@@ -35,6 +35,19 @@ export interface AnalyzeInput {
   body: string;
 }
 
+export interface ProjectDraftValidation {
+  isSufficient: boolean;
+  reasons: string[];
+  missing: string[];
+  meaningfulWordCount: number;
+  detectedSignals: string[];
+}
+
+export interface AnalysisWarning {
+  title: string;
+  body: string;
+}
+
 export interface ScoreBreakdown {
   clarity: number;
   usefulness: number;
@@ -42,6 +55,9 @@ export interface ScoreBreakdown {
   commentPotential: number;
   founderAppeal: number;
   overall: number;
+  status: string;
+  warning?: AnalysisWarning;
+  validation: ProjectDraftValidation;
   suggestions: string[];
   strengths: string[];
   helped: string[];

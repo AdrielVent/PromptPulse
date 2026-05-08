@@ -923,6 +923,53 @@ textarea:focus {
     rgba(5, 7, 10, 0.58);
 }
 
+.analysis-warning-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255, 198, 92, 0.34);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 198, 92, 0.12), rgba(255, 255, 255, 0.035)),
+    rgba(28, 22, 12, 0.5);
+}
+
+.analysis-warning-card > div:first-child {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.analysis-warning-card svg {
+  color: var(--amber);
+}
+
+.analysis-warning-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.analysis-warning-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.analysis-hero.is-warning {
+  border-color: rgba(255, 198, 92, 0.24);
+  background:
+    linear-gradient(135deg, rgba(255, 198, 92, 0.12), rgba(72, 216, 255, 0.035)),
+    rgba(5, 7, 10, 0.58);
+}
+
+.analysis-hero.is-warning span {
+  color: var(--amber);
+}
+
 .analysis-hero > div:first-child {
   display: grid;
   align-content: center;
@@ -1864,6 +1911,7 @@ pre {
   .suggested-title,
   .overall-score,
   .analysis-hero,
+  .analysis-warning-card,
   .opportunity-intro > div {
     grid-template-columns: 1fr;
   }

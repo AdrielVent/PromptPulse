@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { getDashboardStats } from "./analytics";
-import { analyzePost } from "./analyzer";
+import { analyzePost, sampleDraft } from "./analyzer";
 import { exportAnalysisToMarkdown } from "./export";
 import { githubPagesBase } from "./deployment";
 import { analyzeEmbedDraft, embedPrivacyBadge, getImprovedEmbedHook } from "./embed";
@@ -26,6 +26,94 @@ describe("PromptPulse analytics", () => {
 });
 
 describe("PromptPulse scoring", () => {
+  const baseDraft = {
+    title: "Built PromptPulse",
+    category: "builder tools",
+    tools: "React, TypeScript, markdown export",
+    projectType: "Analytics product"
+  };
+
+  test("treats hello as an insufficient project draft", () => {
+    const analysis = analyzePost({ ...baseDraft, body: "hello" });
+
+    expect(analysis.overall).toBeLessThanOrEqual(15);
+    expect(analysis.status).toBe("Insufficient project draft");
+    expect(analysis.warning?.title).toBe("Draft is too thin to score accurately");
+  });
+
+  test("caps generic app praise and asks for concrete features", () => {
+    const analysis = analyzePost({ ...baseDraft, body: "my app is cool" });
+
+    expect(analysis.overall).toBeLessThanOrEqual(20);
+    expect(analysis.status).toBe("Insufficient project draft");
+    expect(analysis.fixes).toContain("Add 3–5 concrete features.");
+  });
+
+  test("caps a build claim with no feature detail", () => {
+    const analysis = analyzePost({ ...baseDraft, body: "I built an app" });
+
+    expect(analysis.overall).toBeLessThanOrEqual(25);
+    expect(analysis.status).toBe("Insufficient project draft");
+    expect(analysis.hurt.join(" ")).toContain("does not describe concrete features");
+  });
+
+  test("treats unrelated personal text as irrelevant and avoids stack-only praise", () => {
+    const analysis = analyzePost({ ...baseDraft, body: "I like girls" });
+
+    expect(analysis.overall).toBeLessThanOrEqual(15);
+    expect(analysis.status).toBe("Insufficient project draft");
+    expect(analysis.helped.join(" ")).not.toMatch(/stack context/i);
+  });
+
+  test("treats repeated UI action text as insufficient instead of a project post", () => {
+    const analysis = analyzePost({
+      ...baseDraft,
+      body:
+        "Analyze post Sample post Copy markdown Export Copy improved hook Copy final post Sort Ideas Toggle Jack Mode Copy Full Build Brief Open Integration page Open Embed mode"
+    });
+
+    expect(analysis.overall).toBeLessThanOrEqual(20);
+    expect(analysis.status).toBe("Insufficient project draft");
+  });
+
+  test("scores a strong student app draft as sufficient with useful analysis sections", () => {
+    const analysis = analyzePost({
+      title: "Assignment Priority Planner",
+      category: "student apps",
+      tools: "React, TypeScript, local JSON, markdown export",
+      projectType: "Student productivity app",
+      body:
+        "I built a React app that helps students organize assignments by deadline, effort, and grade impact. It has a priority score, sprint timer, progress cards, and exportable study plan. I made it because students often know what is due but not what to do first. What feature would make this more useful?"
+    });
+
+    expect(analysis.overall).toBeGreaterThan(50);
+    expect(analysis.status).not.toBe("Insufficient project draft");
+    expect(analysis.helped.length).toBeGreaterThan(0);
+    expect(analysis.hurt.length).toBeGreaterThan(0);
+    expect(analysis.fixes.length).toBeGreaterThan(0);
+  });
+
+  test("title and tools cannot rescue a bad draft", () => {
+    const analysis = analyzePost({
+      title: "Built PromptPulse",
+      category: "builder tools",
+      tools: "React, TypeScript, markdown export",
+      projectType: "Analytics product",
+      body: "hello"
+    });
+
+    expect(analysis.overall).toBeLessThanOrEqual(15);
+    expect(analysis.status).toBe("Insufficient project draft");
+  });
+
+  test("keeps the PromptPulse sample sufficient and screenshot-ready", () => {
+    const analysis = analyzePost(sampleDraft);
+
+    expect(analysis.overall).toBeGreaterThan(60);
+    expect(analysis.status).not.toBe("Insufficient project draft");
+    expect(analysis.warning).toBeUndefined();
+  });
+
   test("scores a detailed builder post higher than a vague post", () => {
     const strong = analyzePost({
       title: "Built a local laptop telemetry dashboard inspired by J.A.R.V.I.S.",
@@ -47,7 +135,7 @@ describe("PromptPulse scoring", () => {
 
     expect(strong.overall).toBeGreaterThan(weak.overall);
     expect(strong.suggestions).toContain("End with a sharper question that invites specific feedback.");
-    expect(weak.suggestions).toContain("Explain who the project helps and what problem it solves.");
+    expect(weak.suggestions).toContain("Explain who it helps.");
   });
 
   test("explains what helped, hurt, and should be fixed for screenshot-ready analysis", () => {
@@ -64,6 +152,7 @@ describe("PromptPulse scoring", () => {
     expect(analysis.helped.length).toBeGreaterThanOrEqual(2);
     expect(analysis.hurt.length).toBeGreaterThanOrEqual(1);
     expect(analysis.fixes.length).toBeGreaterThanOrEqual(2);
+    expect(analysis.status).not.toBe("Insufficient project draft");
     expect([...analysis.helped, ...analysis.hurt, ...analysis.fixes].join(" ")).toMatch(/reply|question|demo|Prompted/i);
   });
 });
@@ -98,7 +187,25 @@ describe("PromptPulse rewrite studio", () => {
     const combined = [suite.finalPost, ...suite.titles, ...suite.versions.map((version) => version.body)].join("\n");
 
     expect(combined).not.toMatch(/Built Built/i);
-    expect(combined).toContain("an analytics product");
+    expect(combined).not.toMatch(/analytics product for builders/i);
+  });
+
+  test("removes banned generic rewrite phrases", () => {
+    const suite = generateRewriteSuite({
+      title: "Built PromptPulse, an AI growth studio for Prompted builders",
+      category: "builder tools",
+      tools: "React, TypeScript, Vite, local JSON sample data, markdown export",
+      projectType: "Analytics product",
+      body:
+        "I built PromptPulse because I wanted to understand why some Prompted builds get more likes, comments, and useful feedback than others."
+    });
+
+    const combined = [suite.finalPost, ...suite.titles, ...suite.hooks, ...suite.versions.map((version) => version.body)].join("\n");
+
+    expect(combined).not.toMatch(/analytics product for builders/i);
+    expect(combined).not.toMatch(/Turning analytics product pain/i);
+    expect(combined).not.toMatch(/builder tools experiment/i);
+    expect(combined).not.toMatch(/make the workflow easier to understand/i);
   });
 
   test("final Prompted post opens like a real builder explaining PromptPulse", () => {
@@ -113,7 +220,10 @@ describe("PromptPulse rewrite studio", () => {
 
     expect(suite.finalPost.startsWith("I built PromptPulse because I wanted to understand why")).toBe(true);
     expect(suite.finalPost).toContain("some Prompted builds get more likes, comments, and useful feedback than others.");
-    expect(suite.finalPost).not.toMatch(/growth studio|value proposition|move faster/i);
+    expect(suite.finalPost).toContain("does not scrape Prompted");
+    expect(suite.finalPost).toContain("manual paste/import");
+    expect(suite.finalPost).toContain("local demo data");
+    expect(suite.finalPost).not.toMatch(/value proposition|move faster/i);
   });
 });
 
