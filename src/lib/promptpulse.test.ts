@@ -6,6 +6,7 @@ import { githubPagesBase } from "./deployment";
 import { analyzeEmbedDraft, embedPrivacyBadge, getImprovedEmbedHook } from "./embed";
 import { getIntegrationSafetyText, integrationPlanCopy } from "./integration";
 import { calculateOpportunityScore, generateBuildBrief, generateIdeas, getBeatVerdict, sortIdeas } from "./ideas";
+import { getPageFromHash, navigationItems } from "./navigation";
 import { generateRewriteSuite } from "./rewriter";
 import samplePosts from "../data/posts.json";
 import type { PromptedPost } from "../types";
@@ -70,7 +71,7 @@ describe("PromptPulse scoring", () => {
     const analysis = analyzePost({
       ...baseDraft,
       body:
-        "Analyze post Sample post Copy markdown Export Copy improved hook Copy final post Sort Ideas Toggle Jack Mode Copy Full Build Brief Open Integration page Open Embed mode"
+        "Analyze post Sample post Copy markdown Export Copy improved hook Copy final post Sort Ideas Toggle Platform Signal Mode Copy Full Build Brief Open Integration page Open Embed mode"
     });
 
     expect(analysis.overall).toBeLessThanOrEqual(20);
@@ -366,7 +367,7 @@ describe("PromptPulse idea generator", () => {
     expect(ideas[0].predictedLikesRange.min).toBeGreaterThanOrEqual(15);
     expect(ideas[0].scores.founderAppeal).toBeGreaterThanOrEqual(80);
     expect(ideas[0].whyPromptedCare).toMatch(/Prompted/i);
-    expect(ideas[0].jackGrowth).toMatch(/Prompted grow|better posts|project previews|builders/i);
+    expect(ideas[0].platformLoop).toMatch(/better posts|project previews|builders|previews|replies/i);
     expect(ideas[0].suggestedTools.length).toBeGreaterThanOrEqual(3);
     expect(ideas[0].endingQuestion).toMatch(/\?/);
   });
@@ -459,6 +460,36 @@ describe("PromptPulse markdown export", () => {
 });
 
 describe("PromptPulse launch and deployment readiness", () => {
+  test("navigation config includes every main page with compact orbit labels", () => {
+    expect(navigationItems.map((item) => item.id)).toEqual([
+      "dashboard",
+      "analyze",
+      "rewrite",
+      "insights",
+      "ideas",
+      "integration"
+    ]);
+    expect(navigationItems.map((item) => item.shortLabel)).toEqual(["Dash", "Analyze", "Rewrite", "Signals", "Ideas", "Safety"]);
+    expect(navigationItems.some((item) => /jack/i.test(`${item.label} ${item.shortLabel} ${item.centerLabel}`))).toBe(false);
+  });
+
+  test("hash routes map safely to pages for OrbitNav and GitHub Pages", () => {
+    expect(getPageFromHash("#/analyze")).toBe("analyze");
+    expect(getPageFromHash("#/rewrite")).toBe("rewrite");
+    expect(getPageFromHash("#/ideas")).toBe("ideas");
+    expect(getPageFromHash("#/integration")).toBe("integration");
+    expect(getPageFromHash("#/missing")).toBe("dashboard");
+  });
+
+  test("platform copy avoids founder-specific UI labels", () => {
+    const joinedIdeaCopy = generateIdeas()
+      .map((idea) => `${idea.whyPromptedCare} ${idea.platformLoop}`)
+      .join(" ");
+
+    expect(joinedIdeaCopy).not.toMatch(/\bJack\b|Jack Mode|Why Jack|How this helps Prompted grow/i);
+    expect(joinedIdeaCopy).toMatch(/builder|posts|previews|replies/i);
+  });
+
   test("GitHub Pages build uses relative asset base for repo pages and custom domains", () => {
     expect(githubPagesBase).toBe("./");
   });

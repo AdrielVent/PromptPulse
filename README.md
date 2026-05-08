@@ -30,7 +30,7 @@ I built PromptPulse because better project posts create better previews, clearer
 - Analyze Post workflow with clarity, usefulness, wow factor, comment potential, founder appeal, and overall scoring
 - Screenshot-ready analysis output with helped, hurt, and fix sections
 - Rewrite Studio with clean professional, community hype, and technical builder versions
-- Prompted Opportunity Engine with Jack Mode, predicted likes/comments, founder appeal, builder usefulness, visual wow, comment magnet, and build briefs
+- Prompted Opportunity Engine with Platform Signal Mode, predicted likes/comments, founder appeal, builder usefulness, visual wow, comment magnet, and build briefs
 - Explore Insights with Prompted-style engagement patterns
 - Integration Plan page for safe future adoption paths
 - Compact `#/embed` analyzer mode for sandboxed iframe review

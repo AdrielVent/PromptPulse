@@ -15,7 +15,7 @@
     "suggestedTags": ["ai-tools", "prompted", "growth", "demo"],
     "suggestedTitle": "Built DemoCritic AI to score whether a project demo will get interaction",
     "endingQuestion": "What would make this demo score feel more fair for real Prompted builders?",
-    "jackGrowth": "This helps Prompted grow by teaching builders to post sharper previews, ask better questions, share clearer prompts, and return to improve their next demo after seeing feedback.",
+    "platformLoop": "Clearer posts lead to teaching builders to post sharper previews, ask better questions, share clearer prompts, and return to improve their next demo after seeing feedback.",
     "buildBrief": {
       "productGoal": "Build a local AI-style critique studio that helps Prompted builders improve project demo posts before publishing.",
       "pages": ["Dashboard with sample demo benchmarks", "Demo Analyzer", "Rewrite Studio", "Comparison against previous builds"],
@@ -43,7 +43,7 @@
     "suggestedTags": ["prompted", "writing-tools", "builder-growth", "post-doctor"],
     "suggestedTitle": "Built Prompted Post Doctor to fix project posts before they go live",
     "endingQuestion": "Drop one project draft element you struggle with most: hook, proof, or ending question?",
-    "jackGrowth": "This helps Prompted grow by making better posts easier to produce, increasing replies through stronger endings, and giving builders a reason to come back before each launch.",
+    "platformLoop": "Clearer posts lead to making better posts easier to produce, increasing replies through stronger endings, and giving builders a reason to come back before each launch.",
     "buildBrief": {
       "productGoal": "Create a repair tool that turns rough Prompted drafts into clearer, more interactive posts.",
       "pages": ["Post intake", "Diagnosis report", "Rewrite studio", "Post quality benchmark"],
@@ -71,7 +71,7 @@
     "suggestedTags": ["creator-tools", "analytics", "prompted", "builder-signal"],
     "suggestedTitle": "Built Creator Signal Board to find the strongest Prompted project angles",
     "endingQuestion": "Which signal would help you decide what to build next?",
-    "jackGrowth": "This helps Prompted grow by making high-quality project ideas more visible, encouraging more previews, and nudging builders back to compare what is working.",
+    "platformLoop": "Clearer posts lead to making high-quality project ideas more visible, encouraging more previews, and nudging builders back to compare what is working.",
     "buildBrief": {
       "productGoal": "Build a local analytics board that translates Prompted-style engagement patterns into recommended project angles.",
       "pages": ["Signal dashboard", "Category explorer", "Idea queue", "Export center"],
@@ -98,7 +98,7 @@
     "suggestedTags": ["builder-tools", "launch", "analytics", "prompted"],
     "suggestedTitle": "Built LaunchLens: a launch-readiness scanner for Prompted builders",
     "endingQuestion": "What is the one launch signal you would add before posting?",
-    "jackGrowth": "This helps Prompted grow by improving pre-launch post quality, increasing useful replies, and encouraging builders to return for launch iteration.",
+    "platformLoop": "Clearer posts lead to improving pre-launch post quality, increasing useful replies, and encouraging builders to return for launch iteration.",
     "buildBrief": {
       "productGoal": "Create a launch scanner that tells builders whether their project is ready for a strong Prompted post.",
       "pages": ["Launch dashboard", "Project scanner", "Checklist generator", "Export preview"],
@@ -125,7 +125,7 @@
     "suggestedTags": ["developer-tools", "github", "analytics", "dashboard"],
     "suggestedTitle": "Built RepoRadar: a weekly GitHub timelapse for builders",
     "endingQuestion": "Would you want this to show code risk, shipping velocity, or visual progress first?",
-    "jackGrowth": "This helps Prompted grow by turning build progress into shareable previews and giving developers a recurring reason to post updates.",
+    "platformLoop": "Clearer posts lead to turning build progress into shareable previews and giving developers a recurring reason to post updates.",
     "buildBrief": {
       "productGoal": "Build a repo recap interface that turns commit history into a shareable Prompted project story.",
       "pages": ["Repo overview", "Timeline explorer", "Risk highlights", "Share card export"],
@@ -152,7 +152,7 @@
     "suggestedTags": ["builder-tools", "timeline", "demo", "showcase"],
     "suggestedTitle": "Built BuildReplay to turn project progress into a Prompted-ready story",
     "endingQuestion": "What build milestone would make a replay most satisfying to watch?",
-    "jackGrowth": "This helps Prompted grow by increasing project previews, encouraging repeat updates, and turning progress into posts people can reply to.",
+    "platformLoop": "Clearer posts lead to increasing project previews, encouraging repeat updates, and turning progress into posts people can reply to.",
     "buildBrief": {
       "productGoal": "Create a tool that packages build milestones into a strong visual project story.",
       "pages": ["Replay dashboard", "Milestone editor", "Story preview", "Export studio"],
@@ -179,7 +179,7 @@
     "suggestedTags": ["digital-twin", "student-tools", "ui", "simulation"],
     "suggestedTitle": "Building CampusTwin Terminal: a live-feeling digital twin for student life",
     "endingQuestion": "What campus system would you simulate first: rooms, queues, events, or study zones?",
-    "jackGrowth": "This helps Prompted grow by creating a high-comment visual demo and inspiring builders to share more ambitious project previews.",
+    "platformLoop": "Clearer posts lead to creating a high-comment visual demo and inspiring builders to share more ambitious project previews.",
     "buildBrief": {
       "productGoal": "Build a simulated campus digital twin that feels live and useful for students.",
       "pages": ["Terminal dashboard", "Zone explorer", "Simulation controls", "Post export"],
@@ -206,7 +206,7 @@
     "suggestedTags": ["founder-tools", "backend", "auth", "saas"],
     "suggestedTitle": "Built FounderAuth Kit: auth and onboarding patterns for new SaaS builders",
     "endingQuestion": "Which auth edge case should this kit handle first?",
-    "jackGrowth": "This helps Prompted grow by giving founders useful resources, improving technical post quality, and creating saves that bring builders back.",
+    "platformLoop": "Clearer posts lead to giving founders useful resources, improving technical post quality, and creating saves that bring builders back.",
     "buildBrief": {
       "productGoal": "Build a practical auth starter guide interface for SaaS founders.",
       "pages": ["Auth checklist", "Role flow explorer", "Schema snippets", "Deployment guide"],
@@ -233,7 +233,7 @@
     "suggestedTags": ["student-tools", "productivity", "react", "focus"],
     "suggestedTitle": "Built StudySprint OS to help students decide what to finish first",
     "endingQuestion": "Would effort, deadline, or grade impact matter most in your priority score?",
-    "jackGrowth": "This helps Prompted grow by giving students relatable projects to post, increasing likes from practical utility, and encouraging follow-up feature ideas.",
+    "platformLoop": "Clearer posts lead to giving students relatable projects to post, increasing likes from practical utility, and encouraging follow-up feature ideas.",
     "buildBrief": {
       "productGoal": "Create a student productivity dashboard that turns assignments into prioritized work sprints.",
       "pages": ["Today dashboard", "Assignment intake", "Sprint mode", "Progress recap"],
@@ -260,7 +260,7 @@
     "suggestedTags": ["prompt-engineering", "prompted", "growth", "post-testing"],
     "suggestedTitle": "Built Prompt Arena Simulator to test which project post angle wins",
     "endingQuestion": "Which angle usually wins for your projects: technical, useful, or cinematic?",
-    "jackGrowth": "This helps Prompted grow by encouraging better post experimentation, more shared prompts, and reply threads around why one angle beats another.",
+    "platformLoop": "Clearer posts lead to encouraging better post experimentation, more shared prompts, and reply threads around why one angle beats another.",
     "buildBrief": {
       "productGoal": "Build an arena interface for comparing Prompted post angles before publishing.",
       "pages": ["Arena setup", "Angle comparison", "Score breakdown", "Winner export"],
@@ -287,7 +287,7 @@
     "suggestedTags": ["builder-tools", "showcase", "proof", "prompted"],
     "suggestedTitle": "Built BuildProof Cards to make project posts more credible",
     "endingQuestion": "What proof would make you trust a project post fastest?",
-    "jackGrowth": "This helps Prompted grow by increasing project preview quality, making prompts easier to share, and encouraging builders to return with stronger proof artifacts.",
+    "platformLoop": "Clearer posts lead to increasing project preview quality, making prompts easier to share, and encouraging builders to return with stronger proof artifacts.",
     "buildBrief": {
       "productGoal": "Create a proof-card builder that helps project posts show evidence, not just claims.",
       "pages": ["Card builder", "Proof library", "Post composer", "Export view"],

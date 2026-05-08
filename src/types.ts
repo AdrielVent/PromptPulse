@@ -130,7 +130,7 @@ export interface ProjectIdea {
   suggestedTags: string[];
   suggestedTitle: string;
   endingQuestion: string;
-  jackGrowth: string;
+  platformLoop: string;
   buildBrief: {
     productGoal: string;
     pages: string[];

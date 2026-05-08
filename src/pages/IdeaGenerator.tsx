@@ -34,7 +34,7 @@ const sortOptions: Array<{ id: IdeaSort; label: string; icon: typeof Trophy }> =
 
 export default function IdeaGenerator() {
   const [sort, setSort] = useState<IdeaSort>("overall");
-  const [jackMode, setJackMode] = useState(true);
+  const [platformSignalMode, setPlatformSignalMode] = useState(true);
   const [loading, setLoading] = useState(false);
   const ideas = useMemo(() => sortIdeas(generateIdeas(), sort), [sort]);
 
@@ -65,9 +65,16 @@ export default function IdeaGenerator() {
               patterns into build ideas with clear interaction potential.
             </p>
           </div>
-          <label className="jack-toggle">
-            <input checked={jackMode} onChange={(event) => setJackMode(event.target.checked)} type="checkbox" />
-            <span>Jack Mode</span>
+          <label className="platform-signal-toggle">
+            <input
+              checked={platformSignalMode}
+              onChange={(event) => setPlatformSignalMode(event.target.checked)}
+              type="checkbox"
+            />
+            <span>
+              Platform Signal Mode
+              <small>Shows how each idea could improve post quality, replies, shared prompts, and project previews.</small>
+            </span>
           </label>
         </div>
 
@@ -174,18 +181,18 @@ export default function IdeaGenerator() {
                       <p>{idea.whyComments}</p>
                     </section>
                     <section>
-                      <h4>Why Jack / Prompted would care</h4>
+                      <h4>Why this matters for Prompted-style builders</h4>
                       <p>{idea.whyPromptedCare}</p>
                     </section>
                   </div>
 
-                  {jackMode && (
-                    <div className="jack-growth">
+                  {platformSignalMode && (
+                    <div className="platform-loop">
                       <h4>
                         <Rocket size={15} />
-                        How this helps Prompted grow
+                        How this improves the builder loop
                       </h4>
-                      <p>{idea.jackGrowth}</p>
+                      <p>{idea.platformLoop}</p>
                     </div>
                   )}
 

@@ -94,7 +94,7 @@ export default function IntegrationPlan() {
         </div>
       </Panel>
 
-      <Panel eyebrow="Platform Value" title="What Prompted Would Gain" className="span-6">
+      <Panel eyebrow="Platform Value" title="What the platform would gain" className="span-6">
         <ul className="review-list">
           {promptedGains.map((item) => (
             <li key={item}>{item}</li>
@@ -110,7 +110,7 @@ export default function IntegrationPlan() {
         </ul>
       </Panel>
 
-      <Panel eyebrow="Review Checklist" title="What Jack Can Review" className="span-12">
+      <Panel eyebrow="Review Checklist" title="What reviewers can verify" className="span-12">
         <div className="review-checklist">
           {reviewChecklist.map((item) => (
             <span key={item}>

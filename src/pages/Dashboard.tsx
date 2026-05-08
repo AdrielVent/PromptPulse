@@ -51,14 +51,14 @@ export default function Dashboard({ onAnalyze, onIdeas, onIntegration, posts, st
         <MetricCard icon={<Trophy size={18} />} label="Best post type" value={bestType.label} detail={`${bestType.averageScore} avg engagement index`} />
       </div>
 
-      <Panel className="span-12 jack-dashboard-card">
+      <Panel className="span-12 builder-help-card">
         <div>
           <Lightbulb size={18} />
           <div>
-            <strong>Why Jack would care</strong>
+            <strong>Why this helps builders</strong>
             <p>
-              PromptPulse gives builders a repeatable way to turn rough launches into clearer posts, better reply
-              prompts, and more project previews returning to Prompted.
+              PromptPulse turns rough project drafts into clearer posts, sharper hooks, stronger feedback questions, and
+              better launch-ready previews.
             </p>
           </div>
         </div>
